@@ -28,17 +28,15 @@ abstract class MurdockRadius {
 
   static const BorderRadius noneAll = BorderRadius.zero;
 
-  static const BorderRadius smallAll =
-      BorderRadius.all(Radius.circular(small));
+  static const BorderRadius smallAll = BorderRadius.all(Radius.circular(small));
 
-  static const BorderRadius mediumAll =
-      BorderRadius.all(Radius.circular(medium));
+  static const BorderRadius mediumAll = BorderRadius.all(
+    Radius.circular(medium),
+  );
 
-  static const BorderRadius largeAll =
-      BorderRadius.all(Radius.circular(large));
+  static const BorderRadius largeAll = BorderRadius.all(Radius.circular(large));
 
   static const BorderRadius xlAll = BorderRadius.all(Radius.circular(xl));
 
-  static const BorderRadius fullAll =
-      BorderRadius.all(Radius.circular(full));
+  static const BorderRadius fullAll = BorderRadius.all(Radius.circular(full));
 }

@@ -12,43 +12,19 @@ abstract class MurdockShadows {
 
   /// Level 1 — subtle lift (cards at rest).
   static const List<BoxShadow> low = [
-    BoxShadow(
-      color: Color(0x1A000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
-    ),
-    BoxShadow(
-      color: Color(0x0F000000),
-      blurRadius: 2,
-      offset: Offset(0, 1),
-    ),
+    BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 1)),
+    BoxShadow(color: Color(0x0F000000), blurRadius: 2, offset: Offset(0, 1)),
   ];
 
   /// Level 2 — medium elevation (dropdowns, popovers).
   static const List<BoxShadow> medium = [
-    BoxShadow(
-      color: Color(0x1F000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 4,
-      offset: Offset(0, 1),
-    ),
+    BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 2)),
+    BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1)),
   ];
 
   /// Level 3 — strong elevation (modals, dialogs).
   static const List<BoxShadow> high = [
-    BoxShadow(
-      color: Color(0x29000000),
-      blurRadius: 16,
-      offset: Offset(0, 4),
-    ),
-    BoxShadow(
-      color: Color(0x1A000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
+    BoxShadow(color: Color(0x29000000), blurRadius: 16, offset: Offset(0, 4)),
+    BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 2)),
   ];
 }
