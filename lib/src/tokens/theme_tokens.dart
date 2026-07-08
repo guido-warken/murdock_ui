@@ -6,6 +6,8 @@
 /// ```dart
 /// import 'package:murdock_ui/src/tokens/theme_tokens.dart';
 /// ```
+library;
+
 export 'murdock_colors.dart';
 export 'murdock_radius.dart';
 export 'murdock_shadows.dart';
