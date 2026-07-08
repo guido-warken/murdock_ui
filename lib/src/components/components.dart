@@ -8,3 +8,4 @@
 library;
 
 export 'button/murdock_button.dart';
+export 'input/murdock_text_field.dart';
