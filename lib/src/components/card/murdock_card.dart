@@ -169,8 +169,7 @@ class MurdockCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = MurdockTheme.of(context);
     final shadows = _shadowMap[_level]!;
-    final borderColor =
-        _level == _MurdockCardLevel.flat ? theme.outline : null;
+    final borderColor = _level == _MurdockCardLevel.flat ? theme.outline : null;
 
     final decoration = BoxDecoration(
       color: theme.surface,
@@ -179,10 +178,7 @@ class MurdockCard extends StatelessWidget {
       border: borderColor != null ? Border.all(color: borderColor) : null,
     );
 
-    final content = Padding(
-      padding: EdgeInsets.all(padding),
-      child: child,
-    );
+    final content = Padding(padding: EdgeInsets.all(padding), child: child);
 
     if (onPressed == null) {
       return DecoratedBox(decoration: decoration, child: content);
