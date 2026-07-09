@@ -272,14 +272,13 @@ class MurdockTextField extends StatelessWidget {
     borderSide: BorderSide(color: color, width: 1.5),
   );
 
-  InputBorder _filledBorder(Color color) => UnderlineInputBorder(
-    borderSide: BorderSide(color: color, width: 1.5),
-  );
+  InputBorder _filledBorder(Color color) =>
+      UnderlineInputBorder(borderSide: BorderSide(color: color, width: 1.5));
 
   InputBorder _buildBorder(Color color) =>
       _style == _MurdockTextFieldStyle.outlined
-          ? _outlinedBorder(color)
-          : _filledBorder(color);
+      ? _outlinedBorder(color)
+      : _filledBorder(color);
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
@@ -288,8 +287,9 @@ class MurdockTextField extends StatelessWidget {
     final theme = MurdockTheme.of(context);
     final stateColor = _stateColor(theme);
 
-    final Color focusedBorderColor =
-        state == MurdockTextFieldState.idle ? theme.primary : stateColor;
+    final Color focusedBorderColor = state == MurdockTextFieldState.idle
+        ? theme.primary
+        : stateColor;
 
     final Color labelColor = enabled ? theme.neutral : theme.outline;
 
@@ -314,8 +314,7 @@ class MurdockTextField extends StatelessWidget {
           labelText: label,
           hintText: hint,
           errorText: state == MurdockTextFieldState.error ? errorText : null,
-          helperText:
-              state != MurdockTextFieldState.error ? helperText : null,
+          helperText: state != MurdockTextFieldState.error ? helperText : null,
           prefixIcon: leadingIcon != null
               ? Icon(leadingIcon, color: labelColor)
               : null,
@@ -330,15 +329,11 @@ class MurdockTextField extends StatelessWidget {
           border: _buildBorder(theme.outline),
           enabledBorder: _buildBorder(stateColor),
           focusedBorder: _buildBorder(focusedBorderColor),
-          disabledBorder: _buildBorder(
-            theme.outline.withValues(alpha: 0.38),
-          ),
+          disabledBorder: _buildBorder(theme.outline.withValues(alpha: 0.38)),
           errorBorder: _buildBorder(theme.danger),
           focusedErrorBorder: _buildBorder(theme.danger),
           // ── Typography ────────────────────────────────────────────────────
-          labelStyle: MurdockTypography.bodyMedium.copyWith(
-            color: labelColor,
-          ),
+          labelStyle: MurdockTypography.bodyMedium.copyWith(color: labelColor),
           hintStyle: MurdockTypography.bodyMedium.copyWith(
             color: theme.neutral.withValues(alpha: 0.6),
           ),

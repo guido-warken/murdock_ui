@@ -228,16 +228,16 @@ void main() {
     // ── Rendering ──────────────────────────────────────────────────────────
 
     testWidgets('renders label text', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'Nome')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockTextField(label: 'Nome')));
 
       expect(find.text('Nome'), findsOneWidget);
     });
 
     testWidgets('renders hint text when provided', (tester) async {
       await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'E-mail', hint: 'Ex.: joao@email.com')),
+        _wrap(
+          const MurdockTextField(label: 'E-mail', hint: 'Ex.: joao@email.com'),
+        ),
       );
 
       expect(find.text('Ex.: joao@email.com'), findsOneWidget);
@@ -245,7 +245,9 @@ void main() {
 
     testWidgets('renders leading icon when provided', (tester) async {
       await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'Busca', leadingIcon: Icons.search)),
+        _wrap(
+          const MurdockTextField(label: 'Busca', leadingIcon: Icons.search),
+        ),
       );
 
       expect(find.byIcon(Icons.search), findsOneWidget);
@@ -264,21 +266,22 @@ void main() {
       expect(find.byIcon(Icons.visibility_off), findsOneWidget);
     });
 
-    testWidgets('renders error text when state is error and errorText is given', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _wrap(
-          const MurdockTextField(
-            label: 'E-mail',
-            state: MurdockTextFieldState.error,
-            errorText: 'E-mail inválido',
+    testWidgets(
+      'renders error text when state is error and errorText is given',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            const MurdockTextField(
+              label: 'E-mail',
+              state: MurdockTextFieldState.error,
+              errorText: 'E-mail inválido',
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('E-mail inválido'), findsOneWidget);
-    });
+        expect(find.text('E-mail inválido'), findsOneWidget);
+      },
+    );
 
     testWidgets('does not render error text when state is idle', (
       tester,
@@ -312,9 +315,7 @@ void main() {
     // ── Defaults ───────────────────────────────────────────────────────────
 
     testWidgets('defaults to outlined variant', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'Campo')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockTextField(label: 'Campo')));
 
       final field = tester.widget<MurdockTextField>(
         find.byType(MurdockTextField),
@@ -323,9 +324,7 @@ void main() {
     });
 
     testWidgets('defaults to idle state', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'Campo')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockTextField(label: 'Campo')));
 
       final field = tester.widget<MurdockTextField>(
         find.byType(MurdockTextField),
@@ -372,9 +371,7 @@ void main() {
     // ── Accessibility ──────────────────────────────────────────────────────
 
     testWidgets('has textField semantics role', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockTextField(label: 'E-mail')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockTextField(label: 'E-mail')));
 
       final semantics = tester.getSemantics(find.byType(MurdockTextField));
       expect(semantics.hasFlag(SemanticsFlag.isTextField), isTrue);
@@ -398,9 +395,7 @@ void main() {
 
     testWidgets('semantics is disabled when enabled is false', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MurdockTextField(label: 'Desabilitado', enabled: false),
-        ),
+        _wrap(const MurdockTextField(label: 'Desabilitado', enabled: false)),
       );
 
       final semantics = tester.getSemantics(find.byType(MurdockTextField));
