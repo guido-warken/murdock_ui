@@ -66,7 +66,7 @@ enum _MurdockCardLevel { flat, raised, elevated, floating }
 /// )
 /// ```
 class MurdockCard extends StatelessWidget {
-  const MurdockCard._({ 
+  const MurdockCard._({
     required _MurdockCardLevel level,
     super.key,
     required this.child,

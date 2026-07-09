@@ -465,36 +465,28 @@ void main() {
 
     testWidgets('.flat() renders child', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MurdockCard.flat(child: Text('Conteúdo')),
-        ),
+        _wrap(const MurdockCard.flat(child: Text('Conteúdo'))),
       );
       expect(find.text('Conteúdo'), findsOneWidget);
     });
 
     testWidgets('.raised() renders child', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MurdockCard.raised(child: Text('Conteúdo')),
-        ),
+        _wrap(const MurdockCard.raised(child: Text('Conteúdo'))),
       );
       expect(find.text('Conteúdo'), findsOneWidget);
     });
 
     testWidgets('.elevated() renders child', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MurdockCard.elevated(child: Text('Conteúdo')),
-        ),
+        _wrap(const MurdockCard.elevated(child: Text('Conteúdo'))),
       );
       expect(find.text('Conteúdo'), findsOneWidget);
     });
 
     testWidgets('.floating() renders child', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          const MurdockCard.floating(child: Text('Conteúdo')),
-        ),
+        _wrap(const MurdockCard.floating(child: Text('Conteúdo'))),
       );
       expect(find.text('Conteúdo'), findsOneWidget);
     });
@@ -519,10 +511,7 @@ void main() {
       var tapped = false;
       await tester.pumpWidget(
         _wrap(
-          MurdockCard.raised(
-            onPressed: null,
-            child: const Text('Estático'),
-          ),
+          MurdockCard.raised(onPressed: null, child: const Text('Estático')),
         ),
       );
       await tester.tap(find.byType(MurdockCard), warnIfMissed: false);
