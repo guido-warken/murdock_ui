@@ -6,14 +6,8 @@ import '../../tokens/murdock_radius.dart';
 import '../../tokens/murdock_spacing.dart';
 import '../../tokens/murdock_typography.dart';
 
-/// Visual variant of a [MurdockTextField].
-enum MurdockTextFieldVariant {
-  /// Transparent background with a surrounding border.
-  outlined,
-
-  /// Light background fill without a surrounding border.
-  filled,
-}
+/// Internal style — never exposed in the public API.
+enum _MurdockTextFieldStyle { outlined, filled }
 
 /// Semantic state of a [MurdockTextField].
 ///
@@ -36,21 +30,22 @@ enum MurdockTextFieldState {
 
 /// A semantic, token-driven text field for Murdock UI.
 ///
-/// Visual properties (colors, typography, spacing, border radius) are resolved
-/// entirely from the active [MurdockThemeData] and the static token classes,
-/// ensuring visual consistency across the entire application. No raw values
-/// (hex, dp, sp) are exposed in the constructor.
+/// Use the named constructors to declare the **use case** of the field — not
+/// its visual appearance. Colors, borders, typography, and spacing are resolved
+/// from the active [MurdockThemeData] automatically.
 ///
-/// ## Variants
+/// ## Named constructors
 ///
-/// - [MurdockTextFieldVariant.outlined] — transparent background, bordered.
-/// - [MurdockTextFieldVariant.filled] — light fill background, no full border.
+/// | Constructor | Use case |
+/// |---|---|
+/// | [MurdockTextField.outlined] | Form inputs, settings, data entry |
+/// | [MurdockTextField.filled] | Search bars, chat inputs, dense UIs |
 ///
 /// ## States
 ///
+/// Pass [state] to reflect validation feedback at runtime:
 /// - [MurdockTextFieldState.idle] — neutral default.
-/// - [MurdockTextFieldState.error] — danger palette; pass [errorText] for
-///   inline feedback.
+/// - [MurdockTextFieldState.error] — danger palette; pass [errorText] for inline feedback.
 /// - [MurdockTextFieldState.success] — success palette.
 /// - [MurdockTextFieldState.warning] — warning palette.
 ///
@@ -64,38 +59,37 @@ enum MurdockTextFieldState {
 /// ## Usage
 ///
 /// ```dart
-/// // Simple text field
-/// MurdockTextField(
+/// // Form input
+/// MurdockTextField.outlined(
 ///   label: 'Nome completo',
 ///   hint: 'Ex.: João Silva',
 ///   onChanged: (value) => _name = value,
 /// )
 ///
 /// // With validation error
-/// MurdockTextField(
+/// MurdockTextField.outlined(
 ///   label: 'E-mail',
 ///   state: MurdockTextFieldState.error,
 ///   errorText: 'E-mail inválido',
 ///   controller: _emailController,
 /// )
 ///
-/// // Password field
-/// MurdockTextField(
-///   label: 'Senha',
-///   obscureText: true,
-///   trailingIcon: Icons.visibility_off,
-///   keyboardType: TextInputType.visiblePassword,
+/// // Search bar
+/// MurdockTextField.filled(
+///   label: 'Pesquisar',
+///   leadingIcon: Icons.search,
+///   onSubmitted: _search,
 /// )
 /// ```
 class MurdockTextField extends StatelessWidget {
-  const MurdockTextField({
+  const MurdockTextField._(
+    _MurdockTextFieldStyle style, {
     super.key,
     required this.label,
     this.hint,
     this.controller,
     this.onChanged,
     this.onSubmitted,
-    this.variant = MurdockTextFieldVariant.outlined,
     this.state = MurdockTextFieldState.idle,
     this.errorText,
     this.helperText,
@@ -107,7 +101,91 @@ class MurdockTextField extends StatelessWidget {
     this.keyboardType,
     this.textInputAction,
     this.semanticLabel,
-  });
+  }) : _style = style;
+
+  /// Form input. Use for data entry, settings, and structured forms.
+  ///
+  /// Renders with a transparent background and a surrounding border.
+  const MurdockTextField.outlined({
+    Key? key,
+    required String label,
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    MurdockTextFieldState state = MurdockTextFieldState.idle,
+    String? errorText,
+    String? helperText,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool obscureText = false,
+    bool readOnly = false,
+    bool enabled = true,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         state: state,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         obscureText: obscureText,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: keyboardType,
+         textInputAction: textInputAction,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Search / filter input. Use for search bars, chat inputs, and dense UIs.
+  ///
+  /// Renders with a light background fill and no surrounding border.
+  const MurdockTextField.filled({
+    Key? key,
+    required String label,
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    MurdockTextFieldState state = MurdockTextFieldState.idle,
+    String? errorText,
+    String? helperText,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool obscureText = false,
+    bool readOnly = false,
+    bool enabled = true,
+    TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.filled,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         state: state,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         obscureText: obscureText,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: keyboardType,
+         textInputAction: textInputAction,
+         semanticLabel: semanticLabel,
+       );
 
   // ── Required ───────────────────────────────────────────────────────────────
 
@@ -132,10 +210,9 @@ class MurdockTextField extends StatelessWidget {
   /// key).
   final ValueChanged<String>? onSubmitted;
 
-  // ── Appearance ─────────────────────────────────────────────────────────────
+  // ── Style / State ──────────────────────────────────────────────────────────
 
-  /// Visual variant. Defaults to [MurdockTextFieldVariant.outlined].
-  final MurdockTextFieldVariant variant;
+  final _MurdockTextFieldStyle _style;
 
   /// Semantic state that drives border color and feedback. Defaults to
   /// [MurdockTextFieldState.idle].
@@ -200,7 +277,7 @@ class MurdockTextField extends StatelessWidget {
   );
 
   InputBorder _buildBorder(Color color) =>
-      variant == MurdockTextFieldVariant.outlined
+      _style == _MurdockTextFieldStyle.outlined
           ? _outlinedBorder(color)
           : _filledBorder(color);
 
@@ -245,7 +322,7 @@ class MurdockTextField extends StatelessWidget {
           suffixIcon: trailingIcon != null
               ? Icon(trailingIcon, color: labelColor)
               : null,
-          filled: variant == MurdockTextFieldVariant.filled,
+          filled: _style == _MurdockTextFieldStyle.filled,
           fillColor: enabled
               ? theme.surfaceVariant
               : theme.surfaceVariant.withValues(alpha: 0.38),
