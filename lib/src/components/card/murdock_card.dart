@@ -66,8 +66,8 @@ enum _MurdockCardLevel { flat, raised, elevated, floating }
 /// )
 /// ```
 class MurdockCard extends StatelessWidget {
-  const MurdockCard._(
-    _MurdockCardLevel level, {
+  const MurdockCard._({ 
+    required _MurdockCardLevel level,
     super.key,
     required this.child,
     this.padding = MurdockSpacing.medium,
@@ -83,7 +83,7 @@ class MurdockCard extends StatelessWidget {
     VoidCallback? onPressed,
     String? semanticLabel,
   }) : this._(
-         _MurdockCardLevel.flat,
+         level: _MurdockCardLevel.flat,
          key: key,
          child: child,
          padding: padding,
@@ -99,7 +99,7 @@ class MurdockCard extends StatelessWidget {
     VoidCallback? onPressed,
     String? semanticLabel,
   }) : this._(
-         _MurdockCardLevel.raised,
+         level: _MurdockCardLevel.raised,
          key: key,
          child: child,
          padding: padding,
@@ -115,7 +115,7 @@ class MurdockCard extends StatelessWidget {
     VoidCallback? onPressed,
     String? semanticLabel,
   }) : this._(
-         _MurdockCardLevel.elevated,
+         level: _MurdockCardLevel.elevated,
          key: key,
          child: child,
          padding: padding,
@@ -131,7 +131,7 @@ class MurdockCard extends StatelessWidget {
     VoidCallback? onPressed,
     String? semanticLabel,
   }) : this._(
-         _MurdockCardLevel.floating,
+         level: _MurdockCardLevel.floating,
          key: key,
          child: child,
          padding: padding,
