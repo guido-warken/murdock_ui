@@ -5,116 +5,184 @@ import '../../tokens/murdock_radius.dart';
 import '../../tokens/murdock_spacing.dart';
 import '../../tokens/murdock_typography.dart';
 
-/// Visual style of a [MurdockButton].
-enum MurdockButtonVariant {
-  /// Filled background — use for primary actions.
-  filled,
-
-  /// Transparent background with a border — use for secondary actions.
-  outlined,
-
-  /// No background or border — use for tertiary or inline actions.
-  text,
-}
-
 /// Size scale of a [MurdockButton].
+///
+/// Controls padding and typography density — not color or shape.
 enum MurdockButtonSize {
-  /// Compact button — use in dense UIs or tool bars.
+  /// Compact — use in dense UIs, toolbars, or inline actions.
   small,
 
-  /// Standard button — default for most use cases.
+  /// Standard — default for most use cases.
   medium,
 
-  /// Prominent button — use for hero or call-to-action sections.
+  /// Prominent — use for hero sections or primary call-to-action areas.
   large,
 }
 
+/// Internal color intent — never exposed in the public API.
+enum _MurdockButtonIntent { primary, success, danger, action }
+
 /// A semantic, token-driven button component for Murdock UI.
 ///
-/// Colors, padding, typography, and shape are all resolved from the active
-/// [MurdockThemeData] and the static design token classes, ensuring visual
-/// consistency across the entire application.
+/// Use the named constructors to declare the **intent** of the action —
+/// never its visual appearance. Color palette, shape, and typography are
+/// resolved from the active [MurdockThemeData] automatically.
 ///
-/// ## Variants
+/// ## Named constructors
 ///
-/// - [MurdockButtonVariant.filled] — primary action, filled background.
-/// - [MurdockButtonVariant.outlined] — secondary action, transparent with border.
-/// - [MurdockButtonVariant.text] — tertiary/inline action, no background.
+/// | Constructor | Intent | Typical labels |
+/// |---|---|---|
+/// | [MurdockButton.primary] | Main CTA | "Confirmar", "Enviar", "Continuar" |
+/// | [MurdockButton.success] | Positive action | "Salvar", "Aprovar", "Concluir" |
+/// | [MurdockButton.danger] | Destructive action | "Excluir", "Remover", "Cancelar plano" |
+/// | [MurdockButton.action] | Secondary action | "Voltar", "Fechar", "Ignorar" |
 ///
 /// ## Sizes
 ///
-/// - [MurdockButtonSize.small] — compact (11 sp label, 4/8 dp padding).
-/// - [MurdockButtonSize.medium] — standard default (14 sp label, 8/16 dp padding).
-/// - [MurdockButtonSize.large] — prominent (14 sp label, 16/24 dp padding).
+/// - [MurdockButtonSize.small] — compact (dense UIs, toolbars).
+/// - [MurdockButtonSize.medium] — standard default.
+/// - [MurdockButtonSize.large] — prominent (hero, call-to-action areas).
 ///
 /// ## Accessibility
 ///
 /// The widget wraps its content in [Semantics] with `button: true` and
-/// enforces a minimum touch target of [MurdockTheme.minTouchTargetSize] ×
-/// [MurdockTheme.minTouchTargetSize] dp, satisfying WCAG 2.5.5 (AAA) and
-/// the Material Design 48 dp touch-target guideline.
+/// enforces a minimum touch target of [MurdockTheme.minTouchTargetSize] dp,
+/// satisfying WCAG 2.5.5 (AAA) and the Material Design 48 dp guideline.
 ///
 /// ## Disabled state
 ///
-/// Pass `null` to [onPressed] to disable the button. All interactive
-/// feedback is suppressed and colors shift to a muted palette.
+/// Pass `null` to [onPressed] to disable the button.
 ///
 /// ## Loading state
 ///
-/// Set [isLoading] to `true` to replace the button content with a
-/// [CircularProgressIndicator] and prevent any interaction while an
-/// async operation is in progress.
+/// Set [isLoading] to `true` to replace the content with a spinner and
+/// prevent interaction while an async operation is in progress.
 ///
 /// ## Usage
 ///
 /// ```dart
-/// // Primary action
-/// MurdockButton(
-///   label: 'Confirmar',
-///   onPressed: _submit,
+/// MurdockButton.primary(label: 'Confirmar', onPressed: _submit)
+///
+/// MurdockButton.danger(label: 'Excluir conta', onPressed: _delete)
+///
+/// MurdockButton.success(
+///   label: 'Salvar',
+///   onPressed: _save,
+///   leadingIcon: Icons.check,
 /// )
 ///
-/// // Secondary action
-/// MurdockButton(
-///   label: 'Cancelar',
-///   onPressed: _cancel,
-///   variant: MurdockButtonVariant.outlined,
-/// )
-///
-/// // With icons
-/// MurdockButton(
-///   label: 'Adicionar',
-///   onPressed: _add,
-///   leadingIcon: Icons.add,
-/// )
+/// MurdockButton.action(label: 'Cancelar', onPressed: _cancel)
 ///
 /// // Loading state
-/// MurdockButton(
-///   label: 'Salvando…',
-///   onPressed: null,
-///   isLoading: true,
-/// )
+/// MurdockButton.primary(label: 'Salvando…', onPressed: null, isLoading: true)
 /// ```
 class MurdockButton extends StatelessWidget {
-  const MurdockButton({
+  const MurdockButton._({
     super.key,
     required this.label,
     this.onPressed,
-    this.variant = MurdockButtonVariant.filled,
+    required _MurdockButtonIntent intent,
     this.size = MurdockButtonSize.medium,
     this.leadingIcon,
     this.trailingIcon,
     this.isLoading = false,
-  });
+  }) : _intent = intent;
+
+  /// Main call-to-action. Use for the primary, most important action on screen.
+  ///
+  /// Renders with a filled [MurdockColors.primary] background.
+  const MurdockButton.primary({
+    Key? key,
+    required String label,
+    VoidCallback? onPressed,
+    MurdockButtonSize size = MurdockButtonSize.medium,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool isLoading = false,
+  }) : this._(
+         key: key,
+         label: label,
+         onPressed: onPressed,
+         intent: _MurdockButtonIntent.primary,
+         size: size,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         isLoading: isLoading,
+       );
+
+  /// Positive action. Use to confirm, save, approve, or complete a task.
+  ///
+  /// Renders with a filled [MurdockColors.success] background.
+  const MurdockButton.success({
+    Key? key,
+    required String label,
+    VoidCallback? onPressed,
+    MurdockButtonSize size = MurdockButtonSize.medium,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool isLoading = false,
+  }) : this._(
+         key: key,
+         label: label,
+         onPressed: onPressed,
+         intent: _MurdockButtonIntent.success,
+         size: size,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         isLoading: isLoading,
+       );
+
+  /// Destructive action. Use to delete, remove, or perform irreversible operations.
+  ///
+  /// Renders with a filled [MurdockColors.danger] background.
+  const MurdockButton.danger({
+    Key? key,
+    required String label,
+    VoidCallback? onPressed,
+    MurdockButtonSize size = MurdockButtonSize.medium,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool isLoading = false,
+  }) : this._(
+         key: key,
+         label: label,
+         onPressed: onPressed,
+         intent: _MurdockButtonIntent.danger,
+         size: size,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         isLoading: isLoading,
+       );
+
+  /// Secondary or neutral action. Use to cancel, dismiss, or navigate back.
+  ///
+  /// Renders as outlined with [MurdockColors.primary] border and label text.
+  const MurdockButton.action({
+    Key? key,
+    required String label,
+    VoidCallback? onPressed,
+    MurdockButtonSize size = MurdockButtonSize.medium,
+    IconData? leadingIcon,
+    IconData? trailingIcon,
+    bool isLoading = false,
+  }) : this._(
+         key: key,
+         label: label,
+         onPressed: onPressed,
+         intent: _MurdockButtonIntent.action,
+         size: size,
+         leadingIcon: leadingIcon,
+         trailingIcon: trailingIcon,
+         isLoading: isLoading,
+       );
+
+  // ── Fields ─────────────────────────────────────────────────────────────────
 
   /// The text displayed inside the button.
   final String label;
 
   /// Called when the button is tapped. Pass `null` to disable the button.
   final VoidCallback? onPressed;
-
-  /// Visual style variant. Defaults to [MurdockButtonVariant.filled].
-  final MurdockButtonVariant variant;
 
   /// Size scale. Defaults to [MurdockButtonSize.medium].
   final MurdockButtonSize size;
@@ -128,6 +196,8 @@ class MurdockButton extends StatelessWidget {
   /// When `true`, replaces the button content with a [CircularProgressIndicator]
   /// and prevents any interaction. Defaults to `false`.
   final bool isLoading;
+
+  final _MurdockButtonIntent _intent;
 
   // ── Size tokens ────────────────────────────────────────────────────────────
 
@@ -174,30 +244,35 @@ class MurdockButton extends StatelessWidget {
 
     if (isDisabled) {
       foreground = theme.onNeutralContainer.withValues(alpha: 0.38);
-      background = variant == MurdockButtonVariant.filled
+      background = _intent != _MurdockButtonIntent.action
           ? theme.neutralContainer.withValues(alpha: 0.38)
           : Colors.transparent;
       ripple = null;
-      borderSide = variant == MurdockButtonVariant.outlined
+      borderSide = _intent == _MurdockButtonIntent.action
           ? BorderSide(color: theme.outline.withValues(alpha: 0.38), width: 1.5)
           : BorderSide.none;
     } else {
-      switch (variant) {
-        case MurdockButtonVariant.filled:
+      switch (_intent) {
+        case _MurdockButtonIntent.primary:
           foreground = theme.onPrimary;
           background = theme.primary;
           ripple = theme.onPrimary.withValues(alpha: 0.12);
           borderSide = BorderSide.none;
-        case MurdockButtonVariant.outlined:
+        case _MurdockButtonIntent.success:
+          foreground = theme.onSuccess;
+          background = theme.success;
+          ripple = theme.onSuccess.withValues(alpha: 0.12);
+          borderSide = BorderSide.none;
+        case _MurdockButtonIntent.danger:
+          foreground = theme.onDanger;
+          background = theme.danger;
+          ripple = theme.onDanger.withValues(alpha: 0.12);
+          borderSide = BorderSide.none;
+        case _MurdockButtonIntent.action:
           foreground = theme.primary;
           background = Colors.transparent;
           ripple = theme.primary.withValues(alpha: 0.08);
           borderSide = BorderSide(color: theme.primary, width: 1.5);
-        case MurdockButtonVariant.text:
-          foreground = theme.primary;
-          background = Colors.transparent;
-          ripple = theme.primary.withValues(alpha: 0.08);
-          borderSide = BorderSide.none;
       }
     }
 
