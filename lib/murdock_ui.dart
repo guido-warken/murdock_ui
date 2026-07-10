@@ -17,3 +17,6 @@ export 'src/theme/murdock_theme.dart';
 
 // ── Component layer ────────────────────────────────────────────────────────
 export 'src/components/components.dart';
+
+// ── Layout layer (Radar Layout) ────────────────────────────────────────────
+export 'src/layout/layout.dart';
