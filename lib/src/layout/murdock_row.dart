@@ -141,7 +141,9 @@ class MurdockRow extends StatelessWidget {
     final resolvedChildren = <Widget>[];
 
     for (var i = 0; i < children.length; i++) {
-      final child = expand ? Flexible(flex: 1, child: children[i]) : children[i];
+      final child = expand
+          ? Flexible(flex: 1, child: children[i])
+          : children[i];
       resolvedChildren.add(child);
 
       if (i < children.length - 1) {

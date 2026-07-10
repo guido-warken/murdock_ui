@@ -257,38 +257,26 @@ void main() {
       expect(find.byIcon(Icons.visibility_off), findsOneWidget);
     });
 
-    testWidgets(
-      'renders error text when state is error and errorText is given',
-      (tester) async {
-        await tester.pumpWidget(
-          _wrap(
-            const MurdockTextField.outlined(
-              label: 'E-mail',
-              state: MurdockTextFieldState.error,
-              errorText: 'E-mail inválido',
-            ),
-          ),
-        );
-        expect(find.text('E-mail inválido'), findsOneWidget);
-      },
-    );
-
-    testWidgets('does not render error text when state is idle', (
-      tester,
-    ) async {
+    testWidgets('renders errorText immediately when provided', (tester) async {
       await tester.pumpWidget(
         _wrap(
           const MurdockTextField.outlined(
             label: 'E-mail',
-            state: MurdockTextFieldState.idle,
             errorText: 'E-mail inválido',
           ),
         ),
       );
+      expect(find.text('E-mail inválido'), findsOneWidget);
+    });
+
+    testWidgets('does not render errorText when null', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockTextField.outlined(label: 'E-mail')),
+      );
       expect(find.text('E-mail inválido'), findsNothing);
     });
 
-    testWidgets('renders helper text in idle state', (tester) async {
+    testWidgets('renders helper text when no error is active', (tester) async {
       await tester.pumpWidget(
         _wrap(
           const MurdockTextField.outlined(
@@ -300,16 +288,94 @@ void main() {
       expect(find.text('Mínimo 8 caracteres'), findsOneWidget);
     });
 
-    // ── Defaults ───────────────────────────────────────────────────────────
+    // ── Validation ─────────────────────────────────────────────────────────
 
-    testWidgets('defaults to idle state', (tester) async {
+    testWidgets('shows validator error after submit with invalid input', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        _wrap(const MurdockTextField.outlined(label: 'Campo')),
+        _wrap(
+          MurdockTextField.outlined(
+            label: 'E-mail',
+            validator: (v) =>
+                v?.contains('@') == true ? null : 'E-mail inválido',
+          ),
+        ),
       );
-      final field = tester.widget<MurdockTextField>(
-        find.byType(MurdockTextField),
+
+      await tester.enterText(find.byType(TextField), 'nao-é-email');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(find.text('E-mail inválido'), findsOneWidget);
+    });
+
+    testWidgets('clears validator error after submit with valid input', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockTextField.outlined(
+            label: 'E-mail',
+            validator: (v) =>
+                v?.contains('@') == true ? null : 'E-mail inválido',
+          ),
+        ),
       );
-      expect(field.state, MurdockTextFieldState.idle);
+
+      // Submit invalid — error appears
+      await tester.enterText(find.byType(TextField), 'invalido');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('E-mail inválido'), findsOneWidget);
+
+      // Submit valid — error clears
+      await tester.enterText(find.byType(TextField), 'ok@ok.com');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('E-mail inválido'), findsNothing);
+    });
+
+    testWidgets('validates on change when validateOnChange is true', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockTextField.outlined(
+            label: 'Campo',
+            validateOnChange: true,
+            validator: (v) => (v?.isEmpty ?? true) ? 'Obrigatório' : null,
+          ),
+        ),
+      );
+
+      // Type nothing meaningful — still triggers onChange with ''
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      // No error yet because enterText fires with the whole string at once;
+      // type a char then clear to force empty change
+      await tester.enterText(find.byType(TextField), 'x');
+      await tester.pump();
+      expect(find.text('Obrigatório'), findsNothing); // 'x' is valid
+
+      await tester.enterText(find.byType(TextField), '');
+      await tester.pump();
+      expect(find.text('Obrigatório'), findsOneWidget);
+    });
+
+    testWidgets('external errorText overrides validator success', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockTextField.outlined(
+            label: 'E-mail',
+            errorText: 'Erro do servidor',
+            validator: (v) => null, // always valid
+          ),
+        ),
+      );
+      expect(find.text('Erro do servidor'), findsOneWidget);
     });
 
     // ── Interaction ────────────────────────────────────────────────────────
@@ -541,11 +607,9 @@ void main() {
     testWidgets('renders all children', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          MurdockRow(children: [
-            const Text('A'),
-            const Text('B'),
-            const Text('C'),
-          ]),
+          MurdockRow(
+            children: [const Text('A'), const Text('B'), const Text('C')],
+          ),
         ),
       );
       expect(find.text('A'), findsOneWidget);
@@ -594,9 +658,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
-          MurdockRow(children: [const Text('A'), const Text('B')]),
-        ),
+        _wrap(MurdockRow(children: [const Text('A'), const Text('B')])),
       );
       expect(find.byType(Flexible), findsNothing);
     });
@@ -608,11 +670,9 @@ void main() {
     testWidgets('renders all children', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          MurdockColumn(children: [
-            const Text('A'),
-            const Text('B'),
-            const Text('C'),
-          ]),
+          MurdockColumn(
+            children: [const Text('A'), const Text('B'), const Text('C')],
+          ),
         ),
       );
       expect(find.text('A'), findsOneWidget);
@@ -653,9 +713,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
-          MurdockColumn(children: [const Text('A'), const Text('B')]),
-        ),
+        _wrap(MurdockColumn(children: [const Text('A'), const Text('B')])),
       );
       expect(find.byType(Flexible), findsNothing);
     });
@@ -670,9 +728,7 @@ void main() {
           SizedBox(
             width: 200,
             child: Row(
-              children: [
-                MurdockExpanded(child: const Text('Conteúdo')),
-              ],
+              children: [MurdockExpanded(child: const Text('Conteúdo'))],
             ),
           ),
         ),
