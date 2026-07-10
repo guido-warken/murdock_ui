@@ -76,16 +76,18 @@ enum _MurdockButtonIntent { primary, success, danger, action }
 /// // Loading state
 /// MurdockButton.primary(label: 'Salvando…', onPressed: null, isLoading: true)
 /// ```
-class MurdockButton extends StatelessWidget {
-  const MurdockButton._({
+class MurdockButton extends StatefulWidget {
+  const MurdockButton._(
+    _MurdockButtonIntent intent, {
     super.key,
     required this.label,
     this.onPressed,
-    required _MurdockButtonIntent intent,
+    this.onPressedAsync,
     this.size = MurdockButtonSize.medium,
     this.leadingIcon,
     this.trailingIcon,
     this.isLoading = false,
+    this.semanticLabel,
   }) : _intent = intent;
 
   /// Main call-to-action. Use for the primary, most important action on screen.
@@ -95,19 +97,23 @@ class MurdockButton extends StatelessWidget {
     Key? key,
     required String label,
     VoidCallback? onPressed,
+    Future<void> Function()? onPressedAsync,
     MurdockButtonSize size = MurdockButtonSize.medium,
     IconData? leadingIcon,
     IconData? trailingIcon,
     bool isLoading = false,
+    String? semanticLabel,
   }) : this._(
+         _MurdockButtonIntent.primary,
          key: key,
          label: label,
          onPressed: onPressed,
-         intent: _MurdockButtonIntent.primary,
+         onPressedAsync: onPressedAsync,
          size: size,
          leadingIcon: leadingIcon,
          trailingIcon: trailingIcon,
          isLoading: isLoading,
+         semanticLabel: semanticLabel,
        );
 
   /// Positive action. Use to confirm, save, approve, or complete a task.
@@ -117,19 +123,23 @@ class MurdockButton extends StatelessWidget {
     Key? key,
     required String label,
     VoidCallback? onPressed,
+    Future<void> Function()? onPressedAsync,
     MurdockButtonSize size = MurdockButtonSize.medium,
     IconData? leadingIcon,
     IconData? trailingIcon,
     bool isLoading = false,
+    String? semanticLabel,
   }) : this._(
+         _MurdockButtonIntent.success,
          key: key,
          label: label,
          onPressed: onPressed,
-         intent: _MurdockButtonIntent.success,
+         onPressedAsync: onPressedAsync,
          size: size,
          leadingIcon: leadingIcon,
          trailingIcon: trailingIcon,
          isLoading: isLoading,
+         semanticLabel: semanticLabel,
        );
 
   /// Destructive action. Use to delete, remove, or perform irreversible operations.
@@ -139,19 +149,23 @@ class MurdockButton extends StatelessWidget {
     Key? key,
     required String label,
     VoidCallback? onPressed,
+    Future<void> Function()? onPressedAsync,
     MurdockButtonSize size = MurdockButtonSize.medium,
     IconData? leadingIcon,
     IconData? trailingIcon,
     bool isLoading = false,
+    String? semanticLabel,
   }) : this._(
+         _MurdockButtonIntent.danger,
          key: key,
          label: label,
          onPressed: onPressed,
-         intent: _MurdockButtonIntent.danger,
+         onPressedAsync: onPressedAsync,
          size: size,
          leadingIcon: leadingIcon,
          trailingIcon: trailingIcon,
          isLoading: isLoading,
+         semanticLabel: semanticLabel,
        );
 
   /// Secondary or neutral action. Use to cancel, dismiss, or navigate back.
@@ -161,19 +175,23 @@ class MurdockButton extends StatelessWidget {
     Key? key,
     required String label,
     VoidCallback? onPressed,
+    Future<void> Function()? onPressedAsync,
     MurdockButtonSize size = MurdockButtonSize.medium,
     IconData? leadingIcon,
     IconData? trailingIcon,
     bool isLoading = false,
+    String? semanticLabel,
   }) : this._(
+         _MurdockButtonIntent.action,
          key: key,
          label: label,
          onPressed: onPressed,
-         intent: _MurdockButtonIntent.action,
+         onPressedAsync: onPressedAsync,
          size: size,
          leadingIcon: leadingIcon,
          trailingIcon: trailingIcon,
          isLoading: isLoading,
+         semanticLabel: semanticLabel,
        );
 
   // ── Fields ─────────────────────────────────────────────────────────────────
@@ -181,8 +199,14 @@ class MurdockButton extends StatelessWidget {
   /// The text displayed inside the button.
   final String label;
 
-  /// Called when the button is tapped. Pass `null` to disable the button.
+  /// Called when the button is tapped synchronously.
+  /// Pass `null` (with [onPressedAsync] also null) to disable the button.
   final VoidCallback? onPressed;
+
+  /// Called when the button is tapped. The button automatically shows a
+  /// loading spinner while the future is pending and prevents double-taps.
+  /// Takes priority over [onPressed] when both are provided.
+  final Future<void> Function()? onPressedAsync;
 
   /// Size scale. Defaults to [MurdockButtonSize.medium].
   final MurdockButtonSize size;
@@ -193,11 +217,26 @@ class MurdockButton extends StatelessWidget {
   /// Optional icon displayed after [label].
   final IconData? trailingIcon;
 
-  /// When `true`, replaces the button content with a [CircularProgressIndicator]
-  /// and prevents any interaction. Defaults to `false`.
+  /// When `true`, externally forces the loading state. Prefer [onPressedAsync]
+  /// for automatic loading management. Defaults to `false`.
   final bool isLoading;
 
+  /// Label announced by screen readers. Falls back to [label] when `null`.
+  ///
+  /// Use this when [label] alone lacks enough context for a screen-reader user:
+  /// ```dart
+  /// MurdockButton.danger(
+  ///   label: 'Excluir',
+  ///   semanticLabel: 'Excluir produto Camiseta Azul',
+  ///   onPressed: _delete,
+  /// )
+  /// ```
+  final String? semanticLabel;
+
   final _MurdockButtonIntent _intent;
+
+  @override
+  State<MurdockButton> createState() => _MurdockButtonState();
 
   // ── Size tokens ────────────────────────────────────────────────────────────
 
@@ -224,18 +263,43 @@ class MurdockButton extends StatelessWidget {
     MurdockButtonSize.medium: 18.0,
     MurdockButtonSize.large: 20.0,
   };
+}
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+// ── State ───────────────────────────────────────────────────────────────────────────
+
+class _MurdockButtonState extends State<MurdockButton> {
+  bool _isRunning = false;
+
+  // ── Async handling ──────────────────────────────────────────────────────────
+
+  Future<void> _handlePress() async {
+    if (widget.onPressedAsync != null) {
+      setState(() => _isRunning = true);
+      try {
+        await widget.onPressedAsync!();
+      } finally {
+        if (mounted) setState(() => _isRunning = false);
+      }
+    } else {
+      widget.onPressed?.call();
+    }
+  }
+
+  bool get _isEffectivelyLoading => _isRunning || widget.isLoading;
+
+  bool get _isEffectivelyDisabled =>
+      (widget.onPressed == null && widget.onPressedAsync == null) ||
+      _isEffectivelyLoading;
+
+  // ── Build ───────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final theme = MurdockTheme.of(context);
-    final bool isDisabled = onPressed == null;
-    final VoidCallback? effectiveOnTap = isDisabled || isLoading
-        ? null
-        : onPressed;
+    final bool isDisabled = _isEffectivelyDisabled;
+    final VoidCallback? effectiveOnTap = isDisabled ? null : _handlePress;
 
-    // ── Resolve colors per variant / state ─────────────────────────────────
+    // ── Resolve colors per intent / state ─────────────────────────────────────
 
     final Color foreground;
     final Color background;
@@ -244,15 +308,15 @@ class MurdockButton extends StatelessWidget {
 
     if (isDisabled) {
       foreground = theme.onNeutralContainer.withValues(alpha: 0.38);
-      background = _intent != _MurdockButtonIntent.action
+      background = widget._intent != _MurdockButtonIntent.action
           ? theme.neutralContainer.withValues(alpha: 0.38)
           : Colors.transparent;
       ripple = null;
-      borderSide = _intent == _MurdockButtonIntent.action
+      borderSide = widget._intent == _MurdockButtonIntent.action
           ? BorderSide(color: theme.outline.withValues(alpha: 0.38), width: 1.5)
           : BorderSide.none;
     } else {
-      switch (_intent) {
+      switch (widget._intent) {
         case _MurdockButtonIntent.primary:
           foreground = theme.onPrimary;
           background = theme.primary;
@@ -276,24 +340,24 @@ class MurdockButton extends StatelessWidget {
       }
     }
 
-    // ── Shape ──────────────────────────────────────────────────────────────
+    // ── Shape ──────────────────────────────────────────────────────────────────
 
     final shape = RoundedRectangleBorder(
       borderRadius: MurdockRadius.fullAll,
       side: borderSide,
     );
 
-    // ── Content ────────────────────────────────────────────────────────────
+    // ── Content ──────────────────────────────────────────────────────────────────
 
-    final double iconPx = _iconSize[size]!;
+    final double iconPx = MurdockButton._iconSize[widget.size]!;
     final EdgeInsets padding = EdgeInsets.symmetric(
-      vertical: _vPad[size]!,
-      horizontal: _hPad[size]!,
+      vertical: MurdockButton._vPad[widget.size]!,
+      horizontal: MurdockButton._hPad[widget.size]!,
     );
 
     Widget content;
 
-    if (isLoading) {
+    if (_isEffectivelyLoading) {
       content = SizedBox(
         width: iconPx,
         height: iconPx,
@@ -304,38 +368,41 @@ class MurdockButton extends StatelessWidget {
       );
     } else {
       final labelWidget = Text(
-        label,
-        style: _labelStyle[size]!.copyWith(color: foreground),
+        widget.label,
+        style: MurdockButton._labelStyle[widget.size]!.copyWith(
+          color: foreground,
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );
 
-      if (leadingIcon == null && trailingIcon == null) {
+      if (widget.leadingIcon == null && widget.trailingIcon == null) {
         content = labelWidget;
       } else {
         content = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: iconPx, color: foreground),
+            if (widget.leadingIcon != null) ...[
+              Icon(widget.leadingIcon, size: iconPx, color: foreground),
               const SizedBox(width: MurdockSpacing.xs),
             ],
             labelWidget,
-            if (trailingIcon != null) ...[
+            if (widget.trailingIcon != null) ...[
               const SizedBox(width: MurdockSpacing.xs),
-              Icon(trailingIcon, size: iconPx, color: foreground),
+              Icon(widget.trailingIcon, size: iconPx, color: foreground),
             ],
           ],
         );
       }
     }
 
-    // ── Compose ────────────────────────────────────────────────────────────
+    // ── Compose ──────────────────────────────────────────────────────────────────
 
     return Semantics(
       button: true,
       enabled: !isDisabled,
-      label: label,
+      label: widget.semanticLabel ?? widget.label,
+      excludeSemantics: true,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: MurdockTheme.minTouchTargetSize,
