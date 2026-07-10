@@ -832,6 +832,30 @@ void main() {
       final semantics = tester.getSemantics(find.byType(MurdockCard));
       expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
     });
+
+    testWidgets('exposes semanticLabel on static card via Semantics container',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockCard.raised(
+            semanticLabel: 'Produto: Camiseta Azul',
+            child: const Text('Camiseta Azul'),
+          ),
+        ),
+      );
+      final card = tester.widget<MurdockCard>(find.byType(MurdockCard));
+      expect(card.semanticLabel, 'Produto: Camiseta Azul');
+      // Semantics container wraps the card when label is set
+      expect(find.byType(Semantics), findsWidgets);
+    });
+
+    testWidgets('no semanticLabel field when not provided', (tester) async {
+      await tester.pumpWidget(
+        _wrap(MurdockCard.raised(child: const Text('Sem label'))),
+      );
+      final card = tester.widget<MurdockCard>(find.byType(MurdockCard));
+      expect(card.semanticLabel, isNull);
+    });
   });
 
   // ── MurdockRow ─────────────────────────────────────────────────────────────

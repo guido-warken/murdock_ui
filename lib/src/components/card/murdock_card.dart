@@ -150,6 +150,8 @@ class MurdockCard extends StatelessWidget {
   final VoidCallback? onPressed;
 
   /// Label announced by screen readers when [onPressed] is set.
+  /// Also used to describe a static card to assistive technologies
+  /// when no interaction is expected.
   final String? semanticLabel;
 
   final _MurdockCardLevel _level;
@@ -181,7 +183,13 @@ class MurdockCard extends StatelessWidget {
     final content = Padding(padding: EdgeInsets.all(padding), child: child);
 
     if (onPressed == null) {
-      return DecoratedBox(decoration: decoration, child: content);
+      final staticCard = DecoratedBox(decoration: decoration, child: content);
+      if (semanticLabel == null) return staticCard;
+      return Semantics(
+        container: true,
+        label: semanticLabel,
+        child: staticCard,
+      );
     }
 
     return Semantics(
