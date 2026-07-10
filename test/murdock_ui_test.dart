@@ -541,11 +541,9 @@ void main() {
     testWidgets('renders all children', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          MurdockRow(children: [
-            const Text('A'),
-            const Text('B'),
-            const Text('C'),
-          ]),
+          MurdockRow(
+            children: [const Text('A'), const Text('B'), const Text('C')],
+          ),
         ),
       );
       expect(find.text('A'), findsOneWidget);
@@ -594,9 +592,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
-          MurdockRow(children: [const Text('A'), const Text('B')]),
-        ),
+        _wrap(MurdockRow(children: [const Text('A'), const Text('B')])),
       );
       expect(find.byType(Flexible), findsNothing);
     });
@@ -608,11 +604,9 @@ void main() {
     testWidgets('renders all children', (tester) async {
       await tester.pumpWidget(
         _wrap(
-          MurdockColumn(children: [
-            const Text('A'),
-            const Text('B'),
-            const Text('C'),
-          ]),
+          MurdockColumn(
+            children: [const Text('A'), const Text('B'), const Text('C')],
+          ),
         ),
       );
       expect(find.text('A'), findsOneWidget);
@@ -653,9 +647,7 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        _wrap(
-          MurdockColumn(children: [const Text('A'), const Text('B')]),
-        ),
+        _wrap(MurdockColumn(children: [const Text('A'), const Text('B')])),
       );
       expect(find.byType(Flexible), findsNothing);
     });
@@ -670,9 +662,7 @@ void main() {
           SizedBox(
             width: 200,
             child: Row(
-              children: [
-                MurdockExpanded(child: const Text('Conteúdo')),
-              ],
+              children: [MurdockExpanded(child: const Text('Conteúdo'))],
             ),
           ),
         ),
