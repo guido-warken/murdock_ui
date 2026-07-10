@@ -457,6 +457,125 @@ void main() {
       final semantics = tester.getSemantics(find.byType(MurdockTextField));
       expect(semantics.hasFlag(SemanticsFlag.isEnabled), isFalse);
     });
+
+    // ── Semantic constructors ──────────────────────────────────────────────
+
+    testWidgets('.email() renders with email icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.email()));
+      expect(find.byIcon(Icons.alternate_email), findsOneWidget);
+    });
+
+    testWidgets('.email() shows built-in error for invalid email on submit', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.email()));
+      await tester.enterText(find.byType(TextField), 'nao-e-email');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('E-mail inválido'), findsOneWidget);
+    });
+
+    testWidgets('.email() passes for valid email', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.email()));
+      await tester.enterText(find.byType(TextField), 'ok@ok.com');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('E-mail inválido'), findsNothing);
+    });
+
+    testWidgets('.email() custom validator overrides built-in', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockTextField.email(
+            validator: (_) => 'Erro customizado',
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), 'ok@ok.com');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('Erro customizado'), findsOneWidget);
+    });
+
+    testWidgets('.password() obscures text', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.password()));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.obscureText, isTrue);
+    });
+
+    testWidgets('.password() renders with lock icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.password()));
+      expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    });
+
+    testWidgets('.phone() renders with phone icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.phone()));
+      expect(find.byIcon(Icons.phone_outlined), findsOneWidget);
+    });
+
+    testWidgets('.phone() shows error when digits are too few', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.phone()));
+      await tester.enterText(find.byType(TextField), '123');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('Telefone incompleto'), findsOneWidget);
+    });
+
+    testWidgets('.number() accepts only digits', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.number(label: 'Qtd')));
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.keyboardType, TextInputType.number);
+      expect(field.inputFormatters, isNotNull);
+    });
+
+    testWidgets('.name() renders with person icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.name()));
+      expect(find.byIcon(Icons.person_outline), findsOneWidget);
+    });
+
+    testWidgets('.search() renders with search icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.search()));
+      expect(find.byIcon(Icons.search), findsOneWidget);
+    });
+
+    testWidgets('.cpf() renders with badge icon', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.cpf()));
+      expect(find.byIcon(Icons.badge_outlined), findsOneWidget);
+    });
+
+    testWidgets('.cpf() shows error for invalid CPF', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.cpf()));
+      await tester.enterText(find.byType(TextField), '000.000.000-00');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('CPF inválido'), findsOneWidget);
+    });
+
+    testWidgets('.cpf() passes for valid CPF', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.cpf()));
+      // CPF válido: 529.982.247-25
+      await tester.enterText(find.byType(TextField), '529.982.247-25');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('CPF inválido'), findsNothing);
+      expect(find.text('CPF incompleto'), findsNothing);
+    });
+
+    testWidgets('.url() shows error for invalid URL', (tester) async {
+      await tester.pumpWidget(_wrap(MurdockTextField.url()));
+      await tester.enterText(find.byType(TextField), 'nao-e-url');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(find.text('URL inválida'), findsOneWidget);
+    });
+
+    testWidgets('.multiline() allows unlimited lines', (tester) async {
+      await tester.pumpWidget(
+        _wrap(MurdockTextField.multiline(label: 'Comentário')),
+      );
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.maxLines, isNull);
+    });
   });
 
   // ── MurdockText ────────────────────────────────────────────────────────────
