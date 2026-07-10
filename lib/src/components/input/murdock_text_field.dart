@@ -7,27 +7,59 @@ import '../../tokens/murdock_radius.dart';
 import '../../tokens/murdock_spacing.dart';
 import '../../tokens/murdock_typography.dart';
 
-/// Internal style — never exposed in the public API.
+/// Internal visual style — never exposed in the public API.
 enum _MurdockTextFieldStyle { outlined, filled }
+
+/// Internal semantic type — drives default validation, formatters, keyboard
+/// type, and icons. Never exposed in the public API.
+enum _MurdockSemanticType {
+  none,
+  email,
+  password,
+  phone,
+  cpf,
+  number,
+  multiline,
+  name,
+  url,
+  search,
+}
 
 /// A semantic, token-driven text field for Murdock UI.
 ///
 /// Manages its own validation state internally. The parent only declares
-/// **intent** — what to validate and when — and the widget handles all
-/// visual feedback automatically.
+/// **intent** — which named constructor to use — and the widget configures
+/// keyboard type, input formatters, built-in validation, and visual feedback
+/// automatically.
 ///
-/// ## Named constructors
+/// ## Style constructors (no built-in validation)
 ///
 /// | Constructor | Use case |
 /// |---|---|
-/// | [MurdockTextField.outlined] | Form inputs, settings, data entry |
-/// | [MurdockTextField.filled] | Search bars, chat inputs, dense UIs |
+/// | [MurdockTextField.outlined] | Generic form inputs, full manual control |
+/// | [MurdockTextField.filled] | Generic search / chat inputs |
+///
+/// ## Semantic constructors (intent-driven defaults)
+///
+/// | Constructor | Built-in validator | Keyboard | Formatters |
+/// |---|---|---|---|
+/// | [MurdockTextField.email] | E-mail format | `emailAddress` | — |
+/// | [MurdockTextField.password] | — | `visiblePassword` | — |
+/// | [MurdockTextField.phone] | Min. length | `phone` | digits only |
+/// | [MurdockTextField.cpf] | CPF algorithm | `number` | CPF mask |
+/// | [MurdockTextField.number] | — | `number` | digits only |
+/// | [MurdockTextField.multiline] | — | `multiline` | — |
+/// | [MurdockTextField.name] | — | `name` | — |
+/// | [MurdockTextField.url] | URL format | `url` | — |
+/// | [MurdockTextField.search] | — | `text` | — |
+///
+/// All built-in validators can be overridden via the [validator] parameter.
 ///
 /// ## Validation
 ///
 /// Provide a [validator] function that returns `null` when the value is valid,
 /// or an error message string when it is not. The field transitions between
-/// [idle], [error], and [success] states automatically.
+/// idle, error, and success states automatically.
 ///
 /// ```dart
 /// MurdockTextField.outlined(
@@ -80,6 +112,7 @@ class MurdockTextField extends StatefulWidget {
   const MurdockTextField._(
     _MurdockTextFieldStyle style, {
     super.key,
+    _MurdockSemanticType semanticType = _MurdockSemanticType.none,
     required this.label,
     this.hint,
     this.controller,
@@ -96,12 +129,17 @@ class MurdockTextField extends StatefulWidget {
     this.enabled = true,
     this.keyboardType,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
     this.inputFormatters,
     this.maxLength,
+    this.maxLines = 1,
     this.semanticLabel,
-  }) : _style = style;
+  })  : _style = style,
+        _semanticType = semanticType;
 
-  /// Form input. Use for data entry, settings, and structured forms.
+  // ── Style constructors ─────────────────────────────────────────────────────
+
+  /// Generic form input. Use when you need full manual control over validation.
   const MurdockTextField.outlined({
     Key? key,
     required String label,
@@ -147,7 +185,7 @@ class MurdockTextField extends StatefulWidget {
          semanticLabel: semanticLabel,
        );
 
-  /// Search / filter input. Use for search bars, chat inputs, and dense UIs.
+  /// Generic search / filter input. Use when you need full manual control.
   const MurdockTextField.filled({
     Key? key,
     required String label,
@@ -193,9 +231,367 @@ class MurdockTextField extends StatefulWidget {
          semanticLabel: semanticLabel,
        );
 
+  // ── Semantic constructors ──────────────────────────────────────────────────
+
+  /// E-mail input. Validates format automatically.
+  ///
+  /// Defaults: `emailAddress` keyboard, e-mail icon, e-mail validator.
+  /// Pass [validator] to override the built-in validation.
+  MurdockTextField.email({
+    Key? key,
+    String label = 'E-mail',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.email,
+         key: key,
+         label: label,
+         hint: hint ?? 'nome@exemplo.com',
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.alternate_email,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.emailAddress,
+         textInputAction: TextInputAction.done,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Password input. Obscures text by default.
+  ///
+  /// Defaults: `visiblePassword` keyboard, lock icon, obscured text.
+  MurdockTextField.password({
+    Key? key,
+    String label = 'Senha',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.password,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.lock_outline,
+         obscureText: true,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.visiblePassword,
+         textInputAction: TextInputAction.done,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Phone number input. Accepts digits only.
+  ///
+  /// Defaults: `phone` keyboard, phone icon, digits-only formatter,
+  /// minimum-length validator.
+  MurdockTextField.phone({
+    Key? key,
+    String label = 'Telefone',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.phone,
+         key: key,
+         label: label,
+         hint: hint ?? '(00) 00000-0000',
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.phone_outlined,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.phone,
+         textInputAction: TextInputAction.done,
+         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+         maxLength: 11,
+         semanticLabel: semanticLabel,
+       );
+
+  /// CPF input with mask and validation.
+  ///
+  /// Defaults: `number` keyboard, digits-only formatter with CPF mask
+  /// (`###.###.###-##`), CPF check-digit validator.
+  MurdockTextField.cpf({
+    Key? key,
+    String label = 'CPF',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.cpf,
+         key: key,
+         label: label,
+         hint: hint ?? '000.000.000-00',
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.badge_outlined,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.number,
+         textInputAction: TextInputAction.done,
+         inputFormatters: [
+           FilteringTextInputFormatter.digitsOnly,
+           _CpfInputFormatter(),
+         ],
+         maxLength: 14,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Numeric input. Accepts digits only.
+  ///
+  /// Defaults: `number` keyboard, digits-only formatter.
+  MurdockTextField.number({
+    Key? key,
+    required String label,
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    int? maxLength,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.number,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.number,
+         textInputAction: TextInputAction.done,
+         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+         maxLength: maxLength,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Multi-line text input.
+  ///
+  /// Defaults: `multiline` keyboard, `newline` action, unlimited lines.
+  MurdockTextField.multiline({
+    Key? key,
+    required String label,
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    int? maxLength,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.multiline,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.multiline,
+         textInputAction: TextInputAction.newline,
+         maxLength: maxLength,
+         maxLines: null,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Full name input. Capitalises each word automatically.
+  ///
+  /// Defaults: `name` keyboard, `words` capitalisation, person icon.
+  MurdockTextField.name({
+    Key? key,
+    String label = 'Nome completo',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.name,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.person_outline,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.name,
+         textInputAction: TextInputAction.done,
+         textCapitalization: TextCapitalization.words,
+         semanticLabel: semanticLabel,
+       );
+
+  /// URL input. Validates format automatically.
+  ///
+  /// Defaults: `url` keyboard, link icon, URL validator.
+  MurdockTextField.url({
+    Key? key,
+    String label = 'URL',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
+    String? errorText,
+    String? helperText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.outlined,
+         semanticType: _MurdockSemanticType.url,
+         key: key,
+         label: label,
+         hint: hint ?? 'https://exemplo.com',
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         validator: validator,
+         validateOnChange: validateOnChange,
+         errorText: errorText,
+         helperText: helperText,
+         leadingIcon: Icons.link,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.url,
+         textInputAction: TextInputAction.go,
+         semanticLabel: semanticLabel,
+       );
+
+  /// Search input. Filled style with search icon and action.
+  MurdockTextField.search({
+    Key? key,
+    String label = 'Pesquisar',
+    String? hint,
+    TextEditingController? controller,
+    ValueChanged<String>? onChanged,
+    ValueChanged<String>? onSubmitted,
+    String? errorText,
+    bool readOnly = false,
+    bool enabled = true,
+    String? semanticLabel,
+  }) : this._(
+         _MurdockTextFieldStyle.filled,
+         semanticType: _MurdockSemanticType.search,
+         key: key,
+         label: label,
+         hint: hint,
+         controller: controller,
+         onChanged: onChanged,
+         onSubmitted: onSubmitted,
+         leadingIcon: Icons.search,
+         obscureText: false,
+         readOnly: readOnly,
+         enabled: enabled,
+         keyboardType: TextInputType.text,
+         textInputAction: TextInputAction.search,
+         semanticLabel: semanticLabel,
+       );
+
   // ── Fields ─────────────────────────────────────────────────────────────────
 
   final _MurdockTextFieldStyle _style;
+  final _MurdockSemanticType _semanticType;
 
   /// Floating label. Also used as the accessibility label unless
   /// [semanticLabel] is provided.
@@ -213,8 +609,8 @@ class MurdockTextField extends StatefulWidget {
   /// Called when the user submits the field.
   final ValueChanged<String>? onSubmitted;
 
-  /// Validation function. Return `null` if valid, or an error message string
-  /// if invalid. The field manages error/success state automatically.
+  /// Custom validation function. Overrides the built-in validator of semantic
+  /// constructors. Return `null` if valid, or an error message if invalid.
   final String? Function(String?)? validator;
 
   /// When `true`, [validator] runs on every keystroke.
@@ -249,11 +645,17 @@ class MurdockTextField extends StatefulWidget {
   /// Action key behaviour on the software keyboard.
   final TextInputAction? textInputAction;
 
+  /// Text capitalisation strategy.
+  final TextCapitalization textCapitalization;
+
   /// Input formatters for masking or restricting input.
   final List<TextInputFormatter>? inputFormatters;
 
   /// Maximum number of characters allowed.
   final int? maxLength;
+
+  /// Maximum number of lines. `null` means unlimited (multiline).
+  final int? maxLines;
 
   /// Explicit accessibility label. Falls back to [label] when `null`.
   final String? semanticLabel;
@@ -268,13 +670,53 @@ class _MurdockTextFieldState extends State<MurdockTextField> {
   String? _validatorError;
   bool _touched = false;
 
+  // ── Built-in validators ────────────────────────────────────────────────────
+
+  static final _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
+
+  static final _urlRegex = RegExp(
+    r'^https?://[^\s/$.?#].[^\s]*$',
+    caseSensitive: false,
+  );
+
+  String? _builtInValidator(String? value) {
+    if (value == null || value.isEmpty) return null;
+    return switch (widget._semanticType) {
+      _MurdockSemanticType.email =>
+        _emailRegex.hasMatch(value) ? null : 'E-mail inválido',
+      _MurdockSemanticType.phone =>
+        value.length >= 10 ? null : 'Telefone incompleto',
+      _MurdockSemanticType.cpf => _validateCpf(value),
+      _MurdockSemanticType.url =>
+        _urlRegex.hasMatch(value) ? null : 'URL inválida',
+      _ => null,
+    };
+  }
+
+  static String? _validateCpf(String raw) {
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 11) return 'CPF incompleto';
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(digits)) return 'CPF inválido';
+    int sum(int end, int start) {
+      var s = 0;
+      for (var i = 0; i < end; i++) s += int.parse(digits[i]) * (start - i);
+      return s;
+    }
+    int digit(int s) { final r = 11 - (s % 11); return r > 9 ? 0 : r; }
+    if (digit(sum(9, 10)) != int.parse(digits[9])) return 'CPF inválido';
+    if (digit(sum(10, 11)) != int.parse(digits[10])) return 'CPF inválido';
+    return null;
+  }
+
+  // ── Validation logic ───────────────────────────────────────────────────────
+
   void _runValidator(String value) {
-    if (widget.validator == null) return;
-    final error = widget.validator!(value);
-    setState(() {
-      _touched = true;
-      _validatorError = error;
-    });
+    final error = widget.validator != null
+        ? widget.validator!(value)
+        : _builtInValidator(value);
+    setState(() { _touched = true; _validatorError = error; });
   }
 
   void _handleChanged(String value) {
@@ -291,9 +733,15 @@ class _MurdockTextFieldState extends State<MurdockTextField> {
 
   _FieldState get _fieldState {
     if (_effectiveErrorText != null) return _FieldState.error;
-    if (_touched && widget.validator != null) return _FieldState.success;
+    if (_touched &&
+        (widget.validator != null ||
+            widget._semanticType != _MurdockSemanticType.none)) {
+      return _FieldState.success;
+    }
     return _FieldState.idle;
   }
+
+  // ── Border helpers ─────────────────────────────────────────────────────────
 
   Color _stateColor(MurdockThemeData theme) => switch (_fieldState) {
     _FieldState.idle => theme.outline,
@@ -313,6 +761,8 @@ class _MurdockTextFieldState extends State<MurdockTextField> {
       widget._style == _MurdockTextFieldStyle.outlined
           ? _outlinedBorder(color)
           : _filledBorder(color);
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -336,8 +786,10 @@ class _MurdockTextFieldState extends State<MurdockTextField> {
         enabled: widget.enabled,
         keyboardType: widget.keyboardType,
         textInputAction: widget.textInputAction,
+        textCapitalization: widget.textCapitalization,
         inputFormatters: widget.inputFormatters,
         maxLength: widget.maxLength,
+        maxLines: widget.maxLines,
         style: MurdockTypography.bodyMedium.copyWith(
           color: widget.enabled ? theme.onSurface : theme.neutral,
         ),
@@ -387,6 +839,29 @@ class _MurdockTextFieldState extends State<MurdockTextField> {
   }
 }
 
-/// Internal derived state — not part of the public API.
+// ── Internal helpers ───────────────────────────────────────────────────────────
+
+/// Internal derived visual state.
 enum _FieldState { idle, error, success }
 
+/// CPF mask formatter: applies `###.###.###-##` as the user types.
+class _CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length && i < 11; i++) {
+      if (i == 3 || i == 6) buffer.write('.');
+      if (i == 9) buffer.write('-');
+      buffer.write(digits[i]);
+    }
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
