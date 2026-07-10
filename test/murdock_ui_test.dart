@@ -726,7 +726,9 @@ void main() {
 
     testWidgets('onPrimary color resolves without error', (tester) async {
       await tester.pumpWidget(
-        _wrap(const MurdockText.label('NOVO', color: MurdockTextColor.onPrimary)),
+        _wrap(
+          const MurdockText.label('NOVO', color: MurdockTextColor.onPrimary),
+        ),
       );
       expect(find.text('NOVO'), findsOneWidget);
     });
@@ -833,21 +835,23 @@ void main() {
       expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
     });
 
-    testWidgets('exposes semanticLabel on static card via Semantics container',
-        (tester) async {
-      await tester.pumpWidget(
-        _wrap(
-          MurdockCard.raised(
-            semanticLabel: 'Produto: Camiseta Azul',
-            child: const Text('Camiseta Azul'),
+    testWidgets(
+      'exposes semanticLabel on static card via Semantics container',
+      (tester) async {
+        await tester.pumpWidget(
+          _wrap(
+            MurdockCard.raised(
+              semanticLabel: 'Produto: Camiseta Azul',
+              child: const Text('Camiseta Azul'),
+            ),
           ),
-        ),
-      );
-      final card = tester.widget<MurdockCard>(find.byType(MurdockCard));
-      expect(card.semanticLabel, 'Produto: Camiseta Azul');
-      // Semantics container wraps the card when label is set
-      expect(find.byType(Semantics), findsWidgets);
-    });
+        );
+        final card = tester.widget<MurdockCard>(find.byType(MurdockCard));
+        expect(card.semanticLabel, 'Produto: Camiseta Azul');
+        // Semantics container wraps the card when label is set
+        expect(find.byType(Semantics), findsWidgets);
+      },
+    );
 
     testWidgets('no semanticLabel field when not provided', (tester) async {
       await tester.pumpWidget(
