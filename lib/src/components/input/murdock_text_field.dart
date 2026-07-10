@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme/murdock_theme.dart';
 import '../../theme/murdock_theme_data.dart';
@@ -9,30 +10,11 @@ import '../../tokens/murdock_typography.dart';
 /// Internal style — never exposed in the public API.
 enum _MurdockTextFieldStyle { outlined, filled }
 
-/// Semantic state of a [MurdockTextField].
-///
-/// Controls the border color and any supplemental feedback indicators.
-enum MurdockTextFieldState {
-  /// Default neutral state — no extra visual feedback.
-  idle,
-
-  /// Input has a validation error — shows a danger-colored border and, when
-  /// provided, renders [MurdockTextField.errorText] below the field.
-  error,
-
-  /// Input value has been validated — shows a success-colored border.
-  success,
-
-  /// Input requires attention but is not blocking — shows a warning-colored
-  /// border.
-  warning,
-}
-
 /// A semantic, token-driven text field for Murdock UI.
 ///
-/// Use the named constructors to declare the **use case** of the field — not
-/// its visual appearance. Colors, borders, typography, and spacing are resolved
-/// from the active [MurdockThemeData] automatically.
+/// Manages its own validation state internally. The parent only declares
+/// **intent** — what to validate and when — and the widget handles all
+/// visual feedback automatically.
 ///
 /// ## Named constructors
 ///
@@ -41,47 +23,60 @@ enum MurdockTextFieldState {
 /// | [MurdockTextField.outlined] | Form inputs, settings, data entry |
 /// | [MurdockTextField.filled] | Search bars, chat inputs, dense UIs |
 ///
-/// ## States
+/// ## Validation
 ///
-/// Pass [state] to reflect validation feedback at runtime:
-/// - [MurdockTextFieldState.idle] — neutral default.
-/// - [MurdockTextFieldState.error] — danger palette; pass [errorText] for inline feedback.
-/// - [MurdockTextFieldState.success] — success palette.
-/// - [MurdockTextFieldState.warning] — warning palette.
+/// Provide a [validator] function that returns `null` when the value is valid,
+/// or an error message string when it is not. The field transitions between
+/// [idle], [error], and [success] states automatically.
+///
+/// ```dart
+/// MurdockTextField.outlined(
+///   label: 'E-mail',
+///   validator: (v) => v?.contains('@') == true ? null : 'E-mail inválido',
+/// )
+/// ```
+///
+/// By default, validation runs when the user submits the field. Set
+/// [validateOnChange] to `true` to validate on every keystroke.
+///
+/// External errors (e.g. from a server response) can be injected via
+/// [errorText]. When non-null, it forces the error state regardless of the
+/// internal validator result.
+///
+/// ## Input formatting
+///
+/// Pass [inputFormatters] to restrict or mask the input (e.g. digits only,
+/// CPF mask). Use [maxLength] to set a character limit.
 ///
 /// ## Accessibility
 ///
 /// The widget wraps the input in [Semantics] with `textField: true` and
 /// exposes a dedicated [semanticLabel] parameter (falls back to [label]).
-/// The [label] is also rendered as a floating label inside the field to
-/// support low-vision users who rely on persistent on-screen descriptions.
 ///
 /// ## Usage
 ///
 /// ```dart
-/// // Form input
+/// // Self-validating form field
 /// MurdockTextField.outlined(
 ///   label: 'Nome completo',
-///   hint: 'Ex.: João Silva',
-///   onChanged: (value) => _name = value,
+///   validator: (v) => (v?.isEmpty ?? true) ? 'Campo obrigatório' : null,
+///   validateOnChange: true,
 /// )
 ///
-/// // With validation error
-/// MurdockTextField.outlined(
-///   label: 'E-mail',
-///   state: MurdockTextFieldState.error,
-///   errorText: 'E-mail inválido',
-///   controller: _emailController,
-/// )
-///
-/// // Search bar
+/// // Search bar — no validation needed
 /// MurdockTextField.filled(
 ///   label: 'Pesquisar',
 ///   leadingIcon: Icons.search,
 ///   onSubmitted: _search,
 /// )
+///
+/// // External server error
+/// MurdockTextField.outlined(
+///   label: 'E-mail',
+///   errorText: _serverError, // null clears the error
+/// )
 /// ```
-class MurdockTextField extends StatelessWidget {
+class MurdockTextField extends StatefulWidget {
   const MurdockTextField._(
     _MurdockTextFieldStyle style, {
     super.key,
@@ -90,7 +85,8 @@ class MurdockTextField extends StatelessWidget {
     this.controller,
     this.onChanged,
     this.onSubmitted,
-    this.state = MurdockTextFieldState.idle,
+    this.validator,
+    this.validateOnChange = false,
     this.errorText,
     this.helperText,
     this.leadingIcon,
@@ -100,12 +96,12 @@ class MurdockTextField extends StatelessWidget {
     this.enabled = true,
     this.keyboardType,
     this.textInputAction,
+    this.inputFormatters,
+    this.maxLength,
     this.semanticLabel,
   }) : _style = style;
 
   /// Form input. Use for data entry, settings, and structured forms.
-  ///
-  /// Renders with a transparent background and a surrounding border.
   const MurdockTextField.outlined({
     Key? key,
     required String label,
@@ -113,7 +109,8 @@ class MurdockTextField extends StatelessWidget {
     TextEditingController? controller,
     ValueChanged<String>? onChanged,
     ValueChanged<String>? onSubmitted,
-    MurdockTextFieldState state = MurdockTextFieldState.idle,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
     String? errorText,
     String? helperText,
     IconData? leadingIcon,
@@ -123,6 +120,8 @@ class MurdockTextField extends StatelessWidget {
     bool enabled = true,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
     String? semanticLabel,
   }) : this._(
          _MurdockTextFieldStyle.outlined,
@@ -132,7 +131,8 @@ class MurdockTextField extends StatelessWidget {
          controller: controller,
          onChanged: onChanged,
          onSubmitted: onSubmitted,
-         state: state,
+         validator: validator,
+         validateOnChange: validateOnChange,
          errorText: errorText,
          helperText: helperText,
          leadingIcon: leadingIcon,
@@ -142,12 +142,12 @@ class MurdockTextField extends StatelessWidget {
          enabled: enabled,
          keyboardType: keyboardType,
          textInputAction: textInputAction,
+         inputFormatters: inputFormatters,
+         maxLength: maxLength,
          semanticLabel: semanticLabel,
        );
 
   /// Search / filter input. Use for search bars, chat inputs, and dense UIs.
-  ///
-  /// Renders with a light background fill and no surrounding border.
   const MurdockTextField.filled({
     Key? key,
     required String label,
@@ -155,7 +155,8 @@ class MurdockTextField extends StatelessWidget {
     TextEditingController? controller,
     ValueChanged<String>? onChanged,
     ValueChanged<String>? onSubmitted,
-    MurdockTextFieldState state = MurdockTextFieldState.idle,
+    String? Function(String?)? validator,
+    bool validateOnChange = false,
     String? errorText,
     String? helperText,
     IconData? leadingIcon,
@@ -165,6 +166,8 @@ class MurdockTextField extends StatelessWidget {
     bool enabled = true,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
+    List<TextInputFormatter>? inputFormatters,
+    int? maxLength,
     String? semanticLabel,
   }) : this._(
          _MurdockTextFieldStyle.filled,
@@ -174,7 +177,8 @@ class MurdockTextField extends StatelessWidget {
          controller: controller,
          onChanged: onChanged,
          onSubmitted: onSubmitted,
-         state: state,
+         validator: validator,
+         validateOnChange: validateOnChange,
          errorText: errorText,
          helperText: helperText,
          leadingIcon: leadingIcon,
@@ -184,87 +188,117 @@ class MurdockTextField extends StatelessWidget {
          enabled: enabled,
          keyboardType: keyboardType,
          textInputAction: textInputAction,
+         inputFormatters: inputFormatters,
+         maxLength: maxLength,
          semanticLabel: semanticLabel,
        );
 
-  // ── Required ───────────────────────────────────────────────────────────────
+  // ── Fields ─────────────────────────────────────────────────────────────────
 
-  /// Floating label text displayed inside (and above, when focused) the field.
-  ///
-  /// Also used as the accessibility label unless [semanticLabel] is provided.
+  final _MurdockTextFieldStyle _style;
+
+  /// Floating label. Also used as the accessibility label unless
+  /// [semanticLabel] is provided.
   final String label;
-
-  // ── Optional content ───────────────────────────────────────────────────────
 
   /// Placeholder text shown when the field is empty.
   final String? hint;
 
-  /// Controls the text being edited. When `null`, the field manages its own
-  /// internal state.
+  /// Controls the text being edited.
   final TextEditingController? controller;
 
-  /// Called with the new value whenever the text changes.
+  /// Called when the text changes.
   final ValueChanged<String>? onChanged;
 
-  /// Called when the user submits the field (e.g., presses the keyboard action
-  /// key).
+  /// Called when the user submits the field.
   final ValueChanged<String>? onSubmitted;
 
-  // ── Style / State ──────────────────────────────────────────────────────────
+  /// Validation function. Return `null` if valid, or an error message string
+  /// if invalid. The field manages error/success state automatically.
+  final String? Function(String?)? validator;
 
-  final _MurdockTextFieldStyle _style;
+  /// When `true`, [validator] runs on every keystroke.
+  /// When `false` (default), it runs only on submit.
+  final bool validateOnChange;
 
-  /// Semantic state that drives border color and feedback. Defaults to
-  /// [MurdockTextFieldState.idle].
-  final MurdockTextFieldState state;
-
-  // ── Feedback text ──────────────────────────────────────────────────────────
-
-  /// Error message rendered below the field when
-  /// [state] is [MurdockTextFieldState.error].
+  /// External error message (e.g. server-side). Forces error state when
+  /// non-null, regardless of [validator] result.
   final String? errorText;
 
-  /// Supplemental helper text rendered below the field in all non-error states.
+  /// Supplemental helper text shown below the field in non-error states.
   final String? helperText;
 
-  // ── Icons ──────────────────────────────────────────────────────────────────
-
-  /// Optional icon displayed at the start of the input area.
+  /// Optional icon at the start of the input area.
   final IconData? leadingIcon;
 
-  /// Optional icon displayed at the end of the input area.
+  /// Optional icon at the end of the input area.
   final IconData? trailingIcon;
 
-  // ── Behaviour ──────────────────────────────────────────────────────────────
-
-  /// When `true`, the text is obscured (e.g., for password fields).
+  /// When `true`, the text is obscured (e.g. password fields).
   final bool obscureText;
 
-  /// When `true`, the field is read-only — focus is still possible but
-  /// editing is disabled.
+  /// When `true`, the field is read-only.
   final bool readOnly;
 
   /// When `false`, the field is disabled and cannot receive focus.
   final bool enabled;
 
-  /// Keyboard type hint. Uses platform default when `null`.
+  /// Keyboard type hint.
   final TextInputType? keyboardType;
 
-  /// Action key label/behaviour on the software keyboard.
+  /// Action key behaviour on the software keyboard.
   final TextInputAction? textInputAction;
 
-  // ── Accessibility ──────────────────────────────────────────────────────────
+  /// Input formatters for masking or restricting input.
+  final List<TextInputFormatter>? inputFormatters;
+
+  /// Maximum number of characters allowed.
+  final int? maxLength;
 
   /// Explicit accessibility label. Falls back to [label] when `null`.
   final String? semanticLabel;
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  @override
+  State<MurdockTextField> createState() => _MurdockTextFieldState();
+}
 
-  Color _stateColor(MurdockThemeData theme) => switch (state) {
-    MurdockTextFieldState.idle => theme.outline,
-    MurdockTextFieldState.error => theme.danger,
-    MurdockTextFieldState.success => theme.success,
-    MurdockTextFieldState.warning => theme.warning,
+// ── State ──────────────────────────────────────────────────────────────────────
+
+class _MurdockTextFieldState extends State<MurdockTextField> {
+  String? _validatorError;
+  bool _touched = false;
+
+  void _runValidator(String value) {
+    if (widget.validator == null) return;
+    final error = widget.validator!(value);
+    setState(() {
+      _touched = true;
+      _validatorError = error;
+    });
+  }
+
+  void _handleChanged(String value) {
+    if (widget.validateOnChange) _runValidator(value);
+    widget.onChanged?.call(value);
+  }
+
+  void _handleSubmitted(String value) {
+    _runValidator(value);
+    widget.onSubmitted?.call(value);
+  }
+
+  String? get _effectiveErrorText => widget.errorText ?? _validatorError;
+
+  _FieldState get _fieldState {
+    if (_effectiveErrorText != null) return _FieldState.error;
+    if (_touched && widget.validator != null) return _FieldState.success;
+    return _FieldState.idle;
+  }
+
+  Color _stateColor(MurdockThemeData theme) => switch (_fieldState) {
+    _FieldState.idle => theme.outline,
+    _FieldState.error => theme.danger,
+    _FieldState.success => theme.success,
   };
 
   InputBorder _outlinedBorder(Color color) => OutlineInputBorder(
@@ -276,64 +310,64 @@ class MurdockTextField extends StatelessWidget {
       UnderlineInputBorder(borderSide: BorderSide(color: color, width: 1.5));
 
   InputBorder _buildBorder(Color color) =>
-      _style == _MurdockTextFieldStyle.outlined
-      ? _outlinedBorder(color)
-      : _filledBorder(color);
-
-  // ── Build ──────────────────────────────────────────────────────────────────
+      widget._style == _MurdockTextFieldStyle.outlined
+          ? _outlinedBorder(color)
+          : _filledBorder(color);
 
   @override
   Widget build(BuildContext context) {
     final theme = MurdockTheme.of(context);
     final stateColor = _stateColor(theme);
-
-    final Color focusedBorderColor = state == MurdockTextFieldState.idle
-        ? theme.primary
-        : stateColor;
-
-    final Color labelColor = enabled ? theme.neutral : theme.outline;
+    final focusedColor =
+        _fieldState == _FieldState.idle ? theme.primary : stateColor;
+    final labelColor = widget.enabled ? theme.neutral : theme.outline;
 
     return Semantics(
-      label: semanticLabel ?? label,
+      label: widget.semanticLabel ?? widget.label,
       textField: true,
-      enabled: enabled,
-      readOnly: readOnly,
+      enabled: widget.enabled,
+      readOnly: widget.readOnly,
       child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        obscureText: obscureText,
-        readOnly: readOnly,
-        enabled: enabled,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
+        controller: widget.controller,
+        onChanged: _handleChanged,
+        onSubmitted: _handleSubmitted,
+        obscureText: widget.obscureText,
+        readOnly: widget.readOnly,
+        enabled: widget.enabled,
+        keyboardType: widget.keyboardType,
+        textInputAction: widget.textInputAction,
+        inputFormatters: widget.inputFormatters,
+        maxLength: widget.maxLength,
         style: MurdockTypography.bodyMedium.copyWith(
-          color: enabled ? theme.onSurface : theme.neutral,
+          color: widget.enabled ? theme.onSurface : theme.neutral,
         ),
         decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          errorText: state == MurdockTextFieldState.error ? errorText : null,
-          helperText: state != MurdockTextFieldState.error ? helperText : null,
-          prefixIcon: leadingIcon != null
-              ? Icon(leadingIcon, color: labelColor)
+          labelText: widget.label,
+          hintText: widget.hint,
+          errorText: _effectiveErrorText,
+          helperText:
+              _effectiveErrorText == null ? widget.helperText : null,
+          prefixIcon: widget.leadingIcon != null
+              ? Icon(widget.leadingIcon, color: labelColor)
               : null,
-          suffixIcon: trailingIcon != null
-              ? Icon(trailingIcon, color: labelColor)
+          suffixIcon: widget.trailingIcon != null
+              ? Icon(widget.trailingIcon, color: labelColor)
               : null,
-          filled: _style == _MurdockTextFieldStyle.filled,
-          fillColor: enabled
+          filled: widget._style == _MurdockTextFieldStyle.filled,
+          fillColor: widget.enabled
               ? theme.surfaceVariant
               : theme.surfaceVariant.withValues(alpha: 0.38),
-          // ── Borders ───────────────────────────────────────────────────────
           border: _buildBorder(theme.outline),
           enabledBorder: _buildBorder(stateColor),
-          focusedBorder: _buildBorder(focusedBorderColor),
-          disabledBorder: _buildBorder(theme.outline.withValues(alpha: 0.38)),
+          focusedBorder: _buildBorder(focusedColor),
+          disabledBorder: _buildBorder(
+            theme.outline.withValues(alpha: 0.38),
+          ),
           errorBorder: _buildBorder(theme.danger),
           focusedErrorBorder: _buildBorder(theme.danger),
-          // ── Typography ────────────────────────────────────────────────────
-          labelStyle: MurdockTypography.bodyMedium.copyWith(color: labelColor),
+          labelStyle: MurdockTypography.bodyMedium.copyWith(
+            color: labelColor,
+          ),
           hintStyle: MurdockTypography.bodyMedium.copyWith(
             color: theme.neutral.withValues(alpha: 0.6),
           ),
@@ -343,7 +377,6 @@ class MurdockTextField extends StatelessWidget {
           helperStyle: MurdockTypography.labelSmall.copyWith(
             color: theme.neutral,
           ),
-          // ── Spacing ───────────────────────────────────────────────────────
           contentPadding: const EdgeInsets.symmetric(
             horizontal: MurdockSpacing.medium,
             vertical: MurdockSpacing.small,
@@ -353,3 +386,7 @@ class MurdockTextField extends StatelessWidget {
     );
   }
 }
+
+/// Internal derived state — not part of the public API.
+enum _FieldState { idle, error, success }
+
