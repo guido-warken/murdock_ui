@@ -534,4 +534,169 @@ void main() {
       expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
     });
   });
+
+  // ── MurdockRow ─────────────────────────────────────────────────────────────
+
+  group('MurdockRow', () {
+    testWidgets('renders all children', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockRow(children: [
+            const Text('A'),
+            const Text('B'),
+            const Text('C'),
+          ]),
+        ),
+      );
+      expect(find.text('A'), findsOneWidget);
+      expect(find.text('B'), findsOneWidget);
+      expect(find.text('C'), findsOneWidget);
+    });
+
+    testWidgets('inserts gap widgets between children', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockRow(
+            gap: MurdockSpacing.small,
+            children: [const Text('X'), const Text('Y')],
+          ),
+        ),
+      );
+      // 1 SizedBox gap between 2 children
+      expect(find.byType(SizedBox), findsOneWidget);
+    });
+
+    testWidgets('no gap widget for single child', (tester) async {
+      await tester.pumpWidget(
+        _wrap(MurdockRow(children: [const Text('Solo')])),
+      );
+      expect(find.byType(SizedBox), findsNothing);
+    });
+
+    testWidgets('wraps children in Flexible when expand is true', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 300,
+            child: MurdockRow(
+              expand: true,
+              children: [const Text('A'), const Text('B')],
+            ),
+          ),
+        ),
+      );
+      expect(find.byType(Flexible), findsNWidgets(2));
+    });
+
+    testWidgets('does not wrap children in Flexible when expand is false', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockRow(children: [const Text('A'), const Text('B')]),
+        ),
+      );
+      expect(find.byType(Flexible), findsNothing);
+    });
+  });
+
+  // ── MurdockColumn ──────────────────────────────────────────────────────────
+
+  group('MurdockColumn', () {
+    testWidgets('renders all children', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockColumn(children: [
+            const Text('A'),
+            const Text('B'),
+            const Text('C'),
+          ]),
+        ),
+      );
+      expect(find.text('A'), findsOneWidget);
+      expect(find.text('B'), findsOneWidget);
+      expect(find.text('C'), findsOneWidget);
+    });
+
+    testWidgets('inserts gap widgets between children', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockColumn(
+            gap: MurdockSpacing.large,
+            children: [const Text('X'), const Text('Y')],
+          ),
+        ),
+      );
+      expect(find.byType(SizedBox), findsOneWidget);
+    });
+
+    testWidgets('wraps children in Flexible when expand is true', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            height: 300,
+            child: MurdockColumn(
+              expand: true,
+              children: [const Text('A'), const Text('B')],
+            ),
+          ),
+        ),
+      );
+      expect(find.byType(Flexible), findsNWidgets(2));
+    });
+
+    testWidgets('does not wrap children in Flexible when expand is false', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockColumn(children: [const Text('A'), const Text('B')]),
+        ),
+      );
+      expect(find.byType(Flexible), findsNothing);
+    });
+  });
+
+  // ── MurdockExpanded ────────────────────────────────────────────────────────
+
+  group('MurdockExpanded', () {
+    testWidgets('renders child', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 200,
+            child: Row(
+              children: [
+                MurdockExpanded(child: const Text('Conteúdo')),
+              ],
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Conteúdo'), findsOneWidget);
+    });
+
+    testWidgets('applies weight as flex factor', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          SizedBox(
+            width: 300,
+            child: Row(
+              children: [
+                MurdockExpanded(weight: 2, child: const Text('Maior')),
+                MurdockExpanded(weight: 1, child: const Text('Menor')),
+              ],
+            ),
+          ),
+        ),
+      );
+      final flexWidgets = tester.widgetList<Flexible>(find.byType(Flexible));
+      final weights = flexWidgets.map((f) => f.flex).toList();
+      expect(weights, containsAll([2, 1]));
+    });
+  });
 }
