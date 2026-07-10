@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -197,6 +199,88 @@ void main() {
       );
       expect(renderBox.size.width, greaterThanOrEqualTo(48.0));
       expect(renderBox.size.height, greaterThanOrEqualTo(48.0));
+    });
+
+    // ── onPressedAsync ─────────────────────────────────────────────────────
+
+    testWidgets('shows spinner automatically during onPressedAsync', (
+      tester,
+    ) async {
+      final completer = Completer<void>();
+      await tester.pumpWidget(
+        _wrap(
+          MurdockButton.primary(
+            label: 'Salvar',
+            onPressedAsync: () => completer.future,
+          ),
+        ),
+      );
+
+      // Tap — future is still pending
+      await tester.tap(find.byType(MurdockButton));
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Complete the future — spinner should disappear
+      completer.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('prevents double-tap while onPressedAsync is running', (
+      tester,
+    ) async {
+      var callCount = 0;
+      final completer = Completer<void>();
+      await tester.pumpWidget(
+        _wrap(
+          MurdockButton.primary(
+            label: 'Salvar',
+            onPressedAsync: () async {
+              callCount++;
+              await completer.future;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(MurdockButton));
+      await tester.pump();
+      await tester.tap(find.byType(MurdockButton), warnIfMissed: false);
+      await tester.pump();
+
+      expect(callCount, 1); // Second tap is ignored
+      completer.complete();
+      await tester.pumpAndSettle();
+    });
+
+    // ── semanticLabel ──────────────────────────────────────────────────────
+
+    testWidgets('announces semanticLabel to screen readers when provided', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          MurdockButton.danger(
+            label: 'Excluir',
+            semanticLabel: 'Excluir produto Camiseta Azul',
+            onPressed: () {},
+          ),
+        ),
+      );
+      expect(
+        find.bySemanticsLabel('Excluir produto Camiseta Azul'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('falls back to label when semanticLabel is null', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(MurdockButton.primary(label: 'Confirmar', onPressed: () {})),
+      );
+      expect(find.bySemanticsLabel('Confirmar'), findsOneWidget);
     });
   });
 
@@ -485,11 +569,7 @@ void main() {
 
     testWidgets('.email() custom validator overrides built-in', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          MurdockTextField.email(
-            validator: (_) => 'Erro customizado',
-          ),
-        ),
+        _wrap(MurdockTextField.email(validator: (_) => 'Erro customizado')),
       );
       await tester.enterText(find.byType(TextField), 'ok@ok.com');
       await tester.testTextInput.receiveAction(TextInputAction.done);
