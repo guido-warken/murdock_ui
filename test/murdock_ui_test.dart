@@ -721,6 +721,40 @@ void main() {
       final widget = tester.widget<MurdockText>(find.byType(MurdockText));
       expect(widget.semanticLabel, 'Um mil e duzentos reais');
     });
+
+    // ── onPrimary / onSuccess / onDanger / onWarning colors ────────────────
+
+    testWidgets('onPrimary color resolves without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockText.label('NOVO', color: MurdockTextColor.onPrimary)),
+      );
+      expect(find.text('NOVO'), findsOneWidget);
+    });
+
+    testWidgets('onSuccess color resolves without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockText.label('OK', color: MurdockTextColor.onSuccess)),
+      );
+      expect(find.text('OK'), findsOneWidget);
+    });
+
+    testWidgets('onDanger color resolves without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const MurdockText.label('ERRO', color: MurdockTextColor.onDanger),
+        ),
+      );
+      expect(find.text('ERRO'), findsOneWidget);
+    });
+
+    testWidgets('onWarning color resolves without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const MurdockText.label('AVISO', color: MurdockTextColor.onWarning),
+        ),
+      );
+      expect(find.text('AVISO'), findsOneWidget);
+    });
   });
 
   // ── MurdockCard ────────────────────────────────────────────────────────────

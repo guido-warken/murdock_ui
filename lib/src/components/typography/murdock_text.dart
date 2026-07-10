@@ -26,6 +26,18 @@ enum MurdockTextColor {
 
   /// Muted color. Use for secondary labels, placeholders, and hints.
   neutral,
+
+  /// Contrasting color for text placed on a [MurdockColors.primary] surface.
+  onPrimary,
+
+  /// Contrasting color for text placed on a [MurdockColors.success] surface.
+  onSuccess,
+
+  /// Contrasting color for text placed on a [MurdockColors.danger] surface.
+  onDanger,
+
+  /// Contrasting color for text placed on a [MurdockColors.warning] surface.
+  onWarning,
 }
 
 /// Semantic role that maps to a [TextStyle] from [MurdockTypography].
@@ -195,6 +207,10 @@ class MurdockText extends StatelessWidget {
       MurdockTextColor.danger => theme.danger,
       MurdockTextColor.warning => theme.warning,
       MurdockTextColor.neutral => theme.neutral,
+      MurdockTextColor.onPrimary => theme.onPrimary,
+      MurdockTextColor.onSuccess => theme.onSuccess,
+      MurdockTextColor.onDanger => theme.onDanger,
+      MurdockTextColor.onWarning => theme.onWarning,
     };
   }
 
