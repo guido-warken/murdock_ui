@@ -862,6 +862,72 @@ void main() {
     });
   });
 
+  // ── MurdockBadge ───────────────────────────────────────────────────────────
+
+  group('MurdockBadge', () {
+    // ── Named constructors ─────────────────────────────────────────────────
+
+    testWidgets('.primary() renders label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.primary(label: 'NOVO')),
+      );
+      expect(find.text('NOVO'), findsOneWidget);
+    });
+
+    testWidgets('.success() renders label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.success(label: 'Aprovado')),
+      );
+      expect(find.text('Aprovado'), findsOneWidget);
+    });
+
+    testWidgets('.danger() renders label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.danger(label: 'Erro')),
+      );
+      expect(find.text('Erro'), findsOneWidget);
+    });
+
+    testWidgets('.warning() renders label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.warning(label: 'Pendente')),
+      );
+      expect(find.text('Pendente'), findsOneWidget);
+    });
+
+    testWidgets('.neutral() renders label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.neutral(label: '42')),
+      );
+      expect(find.text('42'), findsOneWidget);
+    });
+
+    // ── Accessibility ──────────────────────────────────────────────────────
+
+    testWidgets('uses semanticLabel when provided', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const MurdockBadge.neutral(
+            label: '3',
+            semanticLabel: '3 notificações pendentes',
+          ),
+        ),
+      );
+      final badge = tester.widget<MurdockBadge>(find.byType(MurdockBadge));
+      expect(badge.semanticLabel, '3 notificações pendentes');
+    });
+
+    testWidgets('falls back to label when semanticLabel is null', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(const MurdockBadge.success(label: 'Aprovado')),
+      );
+      final badge = tester.widget<MurdockBadge>(find.byType(MurdockBadge));
+      expect(badge.semanticLabel, isNull);
+    });
+  });
+
   // ── MurdockRow ─────────────────────────────────────────────────────────────
 
   group('MurdockRow', () {

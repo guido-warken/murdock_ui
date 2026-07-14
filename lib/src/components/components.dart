@@ -7,6 +7,7 @@
 /// ```
 library;
 
+export 'badge/murdock_badge.dart';
 export 'button/murdock_button.dart';
 export 'card/murdock_card.dart';
 export 'input/murdock_text_field.dart';
