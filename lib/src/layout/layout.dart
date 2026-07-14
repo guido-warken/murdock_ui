@@ -10,3 +10,4 @@ library;
 
 export 'murdock_column.dart';
 export 'murdock_row.dart';
+export 'murdock_scaffold.dart';

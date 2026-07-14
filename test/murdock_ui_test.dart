@@ -930,6 +930,83 @@ void main() {
 
   // ── MurdockRow ─────────────────────────────────────────────────────────────
 
+  group('MurdockScaffold', () {
+    testWidgets('renders body content', (tester) async {
+      await tester.pumpWidget(
+        MurdockTheme(
+          data: const MurdockThemeData(),
+          child: const MaterialApp(
+            home: MurdockScaffold(body: Text('Conteúdo')),
+          ),
+        ),
+      );
+      expect(find.text('Conteúdo'), findsOneWidget);
+    });
+
+    testWidgets('renders app bar with title when provided', (tester) async {
+      await tester.pumpWidget(
+        MurdockTheme(
+          data: const MurdockThemeData(),
+          child: const MaterialApp(
+            home: MurdockScaffold(title: 'Minha Página', body: SizedBox()),
+          ),
+        ),
+      );
+      expect(find.text('Minha Página'), findsOneWidget);
+      expect(find.byType(AppBar), findsOneWidget);
+    });
+
+    testWidgets('renders no app bar when title and actions are null', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MurdockTheme(
+          data: const MurdockThemeData(),
+          child: const MaterialApp(home: MurdockScaffold(body: SizedBox())),
+        ),
+      );
+      expect(find.byType(AppBar), findsNothing);
+    });
+
+    testWidgets('renders bottom bar when provided', (tester) async {
+      await tester.pumpWidget(
+        MurdockTheme(
+          data: const MurdockThemeData(),
+          child: MaterialApp(
+            home: MurdockScaffold(
+              body: const SizedBox(),
+              bottomBar: MurdockButton.primary(
+                label: 'Confirmar',
+                onPressed: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Confirmar'), findsOneWidget);
+    });
+
+    testWidgets('stores semanticLabel field', (tester) async {
+      await tester.pumpWidget(
+        MurdockTheme(
+          data: const MurdockThemeData(),
+          child: const MaterialApp(
+            home: MurdockScaffold(
+              body: SizedBox(),
+              semanticLabel: 'Página de pedidos',
+            ),
+          ),
+        ),
+      );
+      final scaffold = tester.widget<MurdockScaffold>(
+        find.byType(MurdockScaffold),
+      );
+      expect(scaffold.semanticLabel, 'Página de pedidos');
+    });
+  });
+
+  // ── MurdockRow ─────────────────────────────────────────────────────────────
+
   group('MurdockRow', () {
     testWidgets('renders all children', (tester) async {
       await tester.pumpWidget(
