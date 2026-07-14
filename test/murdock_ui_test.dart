@@ -868,9 +868,7 @@ void main() {
     // ── Named constructors ─────────────────────────────────────────────────
 
     testWidgets('.primary() renders label', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockBadge.primary(label: 'NOVO')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockBadge.primary(label: 'NOVO')));
       expect(find.text('NOVO'), findsOneWidget);
     });
 
@@ -882,9 +880,7 @@ void main() {
     });
 
     testWidgets('.danger() renders label', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockBadge.danger(label: 'Erro')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockBadge.danger(label: 'Erro')));
       expect(find.text('Erro'), findsOneWidget);
     });
 
@@ -896,9 +892,7 @@ void main() {
     });
 
     testWidgets('.neutral() renders label', (tester) async {
-      await tester.pumpWidget(
-        _wrap(const MurdockBadge.neutral(label: '42')),
-      );
+      await tester.pumpWidget(_wrap(const MurdockBadge.neutral(label: '42')));
       expect(find.text('42'), findsOneWidget);
     });
 
